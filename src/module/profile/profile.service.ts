@@ -5,7 +5,7 @@ import { Types } from 'mongoose';
 import { UserReq } from 'src/common/interfaces';
 import { profileDTO, updateProfileDTO, updateProfileIdDTO } from './profileDTO';
 import { generateOTP, Role, UserOtp, UserRoleEnum } from 'src/common';
-import { Compare } from 'src/utils';
+import { Compare, eventEmitter } from 'src/utils';
 
 @Injectable()
 export class profileService {
@@ -17,17 +17,24 @@ export class profileService {
 
   ) { }
 
-  private async sendOtp(userId: Types.ObjectId) {
-    const otp = await generateOTP()
-    await this.OtpRepo.create({
-      type: UserOtp.confirmEmail,
-      code: otp.toString(),
-      createdBy: userId,
-      expireAt: new Date(Date.now() + 60 * 1000)
-    })
-    return otp
-  }
+ private async sendOtp(userId: Types.ObjectId, email: string) {
+    const otp = generateOTP().toString();
 
+    await this.OtpRepo.create({
+      code: otp,
+      createdBy: userId,
+      type: UserOtp.confirmEmail,
+      expireAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    // send email via event
+    eventEmitter.emit(UserOtp.confirmEmail, {
+      email,
+      otp,
+    });
+
+    return otp;
+  }
   //======================== getProfileByLogin =====================
 
   async getProfile(req: UserReq) {
@@ -158,7 +165,7 @@ export class profileService {
       }
       user.email = email
       user.confirmed = false
-      await this.sendOtp(user._id)
+    await this.sendOtp(user._id, user.email);
     }
 
     if ((oldPassword && !newPassword) || (!oldPassword && newPassword)) {
@@ -170,7 +177,7 @@ export class profileService {
         throw new BadRequestException("invalid password")
       }
       user.password = newPassword
-      await this.sendOtp(user._id)
+    await this.sendOtp(user._id, user.email);
     }
     Object.assign(user, profile)
     await user.save()

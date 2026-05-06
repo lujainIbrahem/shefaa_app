@@ -6,7 +6,7 @@ import { flagType, GenderType, UserOtp, UserRoleEnum } from 'src/common/enums';
 import { Types } from 'mongoose';
 import { Compare, eventEmitter } from 'src/utils';
 import { UserReq } from 'src/common/interfaces';
-import { emailTemplate, generateOTP, sendEmail } from "src/common";
+import { generateOTP } from "src/common";
 
 @Injectable()
 export class UserService {

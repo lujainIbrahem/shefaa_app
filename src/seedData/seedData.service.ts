@@ -162,7 +162,6 @@ export class seedDataService {
         role: UserRoleEnum.Doctor
       },
     ];
-
     const patientsData = [
       {
         confirmed: true,
@@ -179,7 +178,8 @@ export class seedDataService {
         disease: "Diabetes",
         age: 45,
         currentMedication: "Insulin",
-        doctorId: new Types.ObjectId("69e1c8ef98edd507900c5600")
+        doctorId: new Types.ObjectId("69fa66af35d89cf25d58bef4"),
+        companionId: new Types.ObjectId("69fa69e6d2d22f612eb3cbe7")
 
       }
       , {
@@ -213,7 +213,7 @@ export class seedDataService {
         disease: "Asthma",
         age: 20,
         currentMedication: "Ventolin",
-        doctorId: new Types.ObjectId("69e1c8f498edd507900c5618")
+        doctorId: new Types.ObjectId("69fa66af35d89cf25d58bef7")
       }
 
       , {
@@ -231,7 +231,9 @@ export class seedDataService {
         disease: "Anemia",
         age: 29,
         currentMedication: "Iron supplements",
-        doctorId: new Types.ObjectId("69e1c8f398edd507900c5612")
+        doctorId: new Types.ObjectId("69fa66b035d89cf25d58befa"),
+        companionId: new Types.ObjectId("69fa69e4d2d22f612eb3cbde")
+
       },
       {
         confirmed: true,
@@ -264,7 +266,7 @@ export class seedDataService {
         disease: "Depression",
         age: 33,
         currentMedication: "SSRIs",
-        doctorId: new Types.ObjectId("69e1c8f198edd507900c5606")
+        doctorId: new Types.ObjectId("69fa66b135d89cf25d58befd")
       },
       {
         confirmed: true,
@@ -297,7 +299,7 @@ export class seedDataService {
         disease: "Migraine",
         age: 27,
         currentMedication: "Pain relievers",
-        doctorId: new Types.ObjectId("69e1c8f298edd507900c560c")
+        doctorId: new Types.ObjectId("69fa66b235d89cf25d58bf00")
       },
       {
         confirmed: true,
@@ -330,7 +332,7 @@ export class seedDataService {
         disease: "Thyroid Disorder",
         age: 40,
         currentMedication: "Thyroxine",
-        doctorId: new Types.ObjectId("69e1c8f398edd507900c5612")
+        doctorId: new Types.ObjectId("69fa66b335d89cf25d58bf03")
       }
     ];
 
@@ -348,7 +350,7 @@ export class seedDataService {
         gender: GenderType.male,
         relationPatient: "father",
         experienceLevel: "junior",
-        patientId: new Types.ObjectId("69e1cad389bf130cf1cdc0f6")
+        patientId: new Types.ObjectId("69fa68bfd678a3cd101bb079")
       },
       {
         confirmed: true,
@@ -363,7 +365,7 @@ export class seedDataService {
         gender: GenderType.female,
         relationPatient: "mother",
         experienceLevel: "senior",
-        patientId: new Types.ObjectId("69e1cad389bf130cf1cdc0f9")
+        patientId: new Types.ObjectId("69fa68bed678a3cd101bb076")
       },
       {
         confirmed: true,
@@ -378,7 +380,7 @@ export class seedDataService {
         gender: GenderType.male,
         relationPatient: "brother",
         experienceLevel: "mid",
-        patientId: new Types.ObjectId("69e1cad489bf130cf1cdc0fc")
+        patientId: new Types.ObjectId("69fa68bdd678a3cd101bb073")
       },
       {
         confirmed: true,
@@ -393,7 +395,7 @@ export class seedDataService {
         gender: GenderType.female,
         relationPatient: "sister",
         experienceLevel: "junior",
-        patientId: new Types.ObjectId("69e1cad489bf130cf1cdc0ff")
+        patientId: new Types.ObjectId("69fa68bdd678a3cd101bb070")
       },
       {
         confirmed: true,
@@ -408,7 +410,7 @@ export class seedDataService {
         gender: GenderType.male,
         relationPatient: "son",
         experienceLevel: "mid",
-        patientId: new Types.ObjectId("69e1cad589bf130cf1cdc102")
+        patientId: new Types.ObjectId("69fa68bcd678a3cd101bb06d")
       },
       {
         confirmed: true,
@@ -423,7 +425,7 @@ export class seedDataService {
         gender: GenderType.female,
         relationPatient: "daughter",
         experienceLevel: "senior",
-        patientId: new Types.ObjectId("69e1cad589bf130cf1cdc105")
+        patientId: new Types.ObjectId("69fa68bbd678a3cd101bb06a")
       },
       {
         confirmed: true,
@@ -438,7 +440,7 @@ export class seedDataService {
         gender: GenderType.male,
         relationPatient: "father",
         experienceLevel: "junior",
-        patientId: new Types.ObjectId("69e1cad589bf130cf1cdc108")
+        patientId: new Types.ObjectId("69fa68bbd678a3cd101bb067")
       },
       {
         confirmed: true,
@@ -453,7 +455,7 @@ export class seedDataService {
         gender: GenderType.female,
         relationPatient: "mother",
         experienceLevel: "mid",
-        patientId: new Types.ObjectId("69e1cad689bf130cf1cdc10b")
+        patientId: new Types.ObjectId("69fa68bad678a3cd101bb064")
       },
       {
         confirmed: true,
@@ -468,7 +470,7 @@ export class seedDataService {
         gender: GenderType.male,
         relationPatient: "brother",
         experienceLevel: "senior",
-        patientId: new Types.ObjectId("69e1cad689bf130cf1cdc10e")
+        patientId: new Types.ObjectId("69fa68b9d678a3cd101bb061")
       },
       {
         confirmed: true,
@@ -483,17 +485,15 @@ export class seedDataService {
         gender: GenderType.female,
         relationPatient: "sister",
         experienceLevel: "junior",
-        patientId: new Types.ObjectId("69e1cad789bf130cf1cdc111")
+        patientId: new Types.ObjectId("69fa68b8d678a3cd101bb05e")
       }
     ];
-
 
     for (const doctor of doctorsData) {
       const exists = await this.userRepo.findOne({ email: doctor.email })
       if (exists) continue
       await this.userRepo.create(doctor)
     }
-
 
 
     for (const patient of patientsData) {
@@ -507,7 +507,6 @@ export class seedDataService {
       if (exists) continue
       await this.userRepo.create(companion)
     }
-
     return { message: "done" }
   }
 }
