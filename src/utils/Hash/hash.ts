@@ -4,7 +4,7 @@ export const Hash =async  ({plainText ,salt_round = Number(process.env.SALT_ROUN
     return await bcrypt.hash( plainText ,salt_round);
 }
 
-export const Compare = async ({plainText,hash} :{plainText:string,hash:string} )=>{
+export const Compare = async ({plainText , hash} :{plainText:string,hash:string} )=>{
      return await bcrypt.compare( plainText ,hash);
 
 }

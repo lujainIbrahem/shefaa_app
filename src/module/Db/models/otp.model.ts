@@ -27,7 +27,14 @@ export const OtpSchema = SchemaFactory.createForClass(Otp);
 OtpSchema.index({expireAt:1},{expireAfterSeconds:0})
 
 
-   
+   OtpSchema.pre("save", async function (next) {
+
+  if (this.isModified("code")) {
+    this.code = await Hash({ plainText: this.code });
+  }
+
+  next();
+});
 
 export const OtpModel = MongooseModule.forFeature([
   {

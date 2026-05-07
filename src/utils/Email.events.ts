@@ -18,7 +18,7 @@ eventEmitter.on(UserOtp.confirmEmail, async (data) => {
     const { email, otp } = data
     await sendEmail({
       to: email,
-      subject: UserOtp.forgetPassword,
+      subject: "Forget Email",
       html: emailTemplate(otp)
     })
  

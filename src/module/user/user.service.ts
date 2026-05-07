@@ -18,25 +18,27 @@ export class UserService {
     private readonly availableTimeRepo: availableTimeRepo,
 
   ) { }
+  private async sendOtp(
+  userId: Types.ObjectId,
+  email: string,
+  type: UserOtp
+) {
 
-  private async sendOtp(userId: Types.ObjectId, email: string) {
-    const otp = generateOTP().toString();
+  const otp = generateOTP();
 
-    await this.OtpRepo.create({
-      code: otp,
-      createdBy: userId,
-      type: UserOtp.confirmEmail,
-      expireAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
+  await this.OtpRepo.create({
+    code: otp,
+    createdBy: userId,
+    type,
+    expireAt: new Date(Date.now() + 5 * 60 * 1000),
+  });
 
-    // send email via event
-    eventEmitter.emit(UserOtp.confirmEmail, {
-      email,
-      otp,
-    });
+  eventEmitter.emit(type, {
+    email,
+    otp,
+  });
 
-    return otp;
-  }
+}
   //======================== signUp =====================
 
   async signUp(body: signUpDTO) {
@@ -131,7 +133,7 @@ export class UserService {
     if (!user) {
       throw new ForbiddenException("User not created")
     }
-    await this.sendOtp(user._id, user.email);
+    await this.sendOtp(user._id, user.email  , UserOtp.confirmEmail);
 
     return user
   }
@@ -154,7 +156,7 @@ export class UserService {
       throw new BadRequestException("otp already exist");
     }
 
-    await this.sendOtp(user._id, user.email);
+    await this.sendOtp(user._id, user.email ,UserOtp.confirmEmail);
     return { message: "otp sent success" }
 
   }
@@ -288,7 +290,7 @@ export class UserService {
     if (!user) {
       throw new BadRequestException("User not found");
     }
-    await this.sendOtp(user._id, user.email);
+    await this.sendOtp(user._id, user.email,UserOtp.forgetPassword);
 
 
     return { message: "Done" }
