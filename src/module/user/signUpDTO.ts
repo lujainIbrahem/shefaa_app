@@ -17,7 +17,7 @@ export class resendOtpDTO{
 export class loginDTO extends resendOtpDTO{
    
     @IsStrongPassword()
-    @IsNotEmpty({message:"password is required"})
+    @IsNotEmpty({message:"password is require"})
     password:string
 
 }
