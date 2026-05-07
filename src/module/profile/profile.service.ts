@@ -17,27 +17,44 @@ export class profileService {
 
   ) { }
 
- private async sendOtp(userId: Types.ObjectId, email: string) {
-    const otp = generateOTP().toString();
+  private async sendOtp(
+    userId: Types.ObjectId,
+    email: string,
+    type: UserOtp
+  ) {
+
+    const otp = generateOTP();
 
     await this.OtpRepo.create({
       code: otp,
       createdBy: userId,
-      type: UserOtp.confirmEmail,
+      type,
       expireAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    // send email via event
-    eventEmitter.emit(UserOtp.confirmEmail, {
+    eventEmitter.emit(type, {
       email,
       otp,
     });
 
-    return otp;
+  }
+
+  private async revoke(
+   userId: Types.ObjectId) {
+    const revoked = await this.revokeTokenRepo.findOne({
+    userId
+});
+
+if (revoked) {
+  throw new BadRequestException("Session expired. Please login again.");
+}
+
   }
   //======================== getProfileByLogin =====================
 
   async getProfile(req: UserReq) {
+      await this.revoke(req.user._id)
+
     const user = await this.userRepo.findById(req.user._id, "-password");
     if (!user) {
       throw new BadRequestException("user not found")
@@ -49,7 +66,9 @@ export class profileService {
 
   //======================== getProfileByDoctor =====================
 
-  async getProfileDoctor() {
+  async getProfileDoctor(req: UserReq) {
+        await this.revoke(req.user._id)
+
     const doctors = await this.userRepo.find({
       filter: { role: UserRoleEnum.Doctor },
       select: "-password"
@@ -66,6 +85,8 @@ export class profileService {
   //======================== getProfilePatientForDoctor =====================
 
   async getDoctorPatients(req: UserReq) {
+        await this.revoke(req.user._id)
+
     const user = await this.userRepo.findById(req.user._id, "-password");
 
     if (!user) {
@@ -106,6 +127,8 @@ export class profileService {
   //======================== getProfileId =====================
 
   async getprofileId(req: UserReq, params: profileDTO) {
+        await this.revoke(req.user._id)
+
     const user = await this.userRepo.findById(params.id, "-password -updatedAt -createdAt -provider -confirmed");
 
     if (!user) {
@@ -131,6 +154,8 @@ export class profileService {
   //======================== getDoctorById  =====================
 
   async getDoctorById(req: UserReq, params: profileDTO) {
+        await this.revoke(req.user._id)
+
     const doctor = await this.userRepo.findOne
       (
         {
@@ -151,6 +176,8 @@ export class profileService {
   //======================== updateProfile =====================
 
   async updateProfile(req: UserReq, body: updateProfileDTO) {
+        await this.revoke(req.user._id)
+
     const { email, oldPassword, newPassword, ...profile } = body
 
     const user = await this.userRepo.findById(req.user._id, "-password")
@@ -165,7 +192,7 @@ export class profileService {
       }
       user.email = email
       user.confirmed = false
-    await this.sendOtp(user._id, user.email);
+    await this.sendOtp(user._id, user.email,UserOtp.confirmEmail);
     }
 
     if ((oldPassword && !newPassword) || (!oldPassword && newPassword)) {
@@ -177,7 +204,7 @@ export class profileService {
         throw new BadRequestException("invalid password")
       }
       user.password = newPassword
-    await this.sendOtp(user._id, user.email);
+    await this.sendOtp(user._id, user.email, UserOtp.confirmEmail);
     }
     Object.assign(user, profile)
     await user.save()
@@ -188,6 +215,8 @@ export class profileService {
   //======================== updateProfileId =====================
 
   async updateProfileId(req: UserReq, body: updateProfileIdDTO, params: profileDTO) {
+        await this.revoke(req.user._id)
+
     const { ...profile } = body
     const user = await this.userRepo.findById(params.id, "-password")
     if (!user) {

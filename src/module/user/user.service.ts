@@ -1,5 +1,5 @@
 import { TokenService } from '../../common/service/token.service';
-import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { availableTimeRepo, OtpRepo, revokeTokenRepo, UserRepo } from '../Db';
 import { confirmEmailDTO, forgetPasswordDTO, loginDTO, logOutDTO, resendOtpDTO, resetPasswordDTO, signUpDTO, updatePasswordDTO } from './signUpDTO';
 import { flagType, GenderType, UserOtp, UserRoleEnum } from 'src/common/enums';
@@ -18,27 +18,30 @@ export class UserService {
     private readonly availableTimeRepo: availableTimeRepo,
 
   ) { }
+
+
   private async sendOtp(
-  userId: Types.ObjectId,
-  email: string,
-  type: UserOtp
-) {
+    userId: Types.ObjectId,
+    email: string,
+    type: UserOtp
+  ) {
 
-  const otp = generateOTP();
+    const otp = generateOTP();
 
-  await this.OtpRepo.create({
-    code: otp,
-    createdBy: userId,
-    type,
-    expireAt: new Date(Date.now() + 5 * 60 * 1000),
-  });
+    await this.OtpRepo.create({
+      code: otp,
+      createdBy: userId,
+      type,
+      expireAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
 
-  eventEmitter.emit(type, {
-    email,
-    otp,
-  });
+    eventEmitter.emit(type, {
+      email,
+      otp,
+    });
 
-}
+  }
+
   //======================== signUp =====================
 
   async signUp(body: signUpDTO) {
@@ -133,7 +136,7 @@ export class UserService {
     if (!user) {
       throw new ForbiddenException("User not created")
     }
-    await this.sendOtp(user._id, user.email  , UserOtp.confirmEmail);
+    await this.sendOtp(user._id, user.email, UserOtp.confirmEmail);
 
     return user
   }
@@ -156,7 +159,7 @@ export class UserService {
       throw new BadRequestException("otp already exist");
     }
 
-    await this.sendOtp(user._id, user.email ,UserOtp.confirmEmail);
+    await this.sendOtp(user._id, user.email, UserOtp.confirmEmail);
     return { message: "otp sent success" }
 
   }
@@ -246,39 +249,6 @@ export class UserService {
     return { message: "Done", access_token, refresh_token, role }
   }
 
-  //======================== revokeToken =====================
-
-  async revokeToken(req: UserReq) {
-
-    const user = req.user;
-    const access_token = await this.tokenService.GenerateToken({
-      payload: { userId: user._id, email: user.email },
-      options: {
-        secret: user.role === UserRoleEnum.Doctor ? process.env.ACCESS_TOKEN_DOCTOR!
-          : user.role === UserRoleEnum.Patient ? process.env.ACCESS_TOKEN_PATIENT!
-            : process.env.ACCESS_TOKEN_COMPANION!,
-        expiresIn: "1h"
-      }
-    });
-
-    const refresh_token = await this.tokenService.GenerateToken({
-      payload: { id: user._id, email: user.email },
-      options: {
-        secret: user.role == UserRoleEnum.Doctor ? process.env.REFRESH_TOKEN_DOCTOR!
-          : user.role === UserRoleEnum.Patient ? process.env.REFRESH_TOKEN_PATIENT!
-            : process.env.REFRESH_TOKEN_COMPANION!,
-        expiresIn: "1y"
-      }
-    });
-    await this.revokeTokenRepo.create({
-      tokenId: req.decoded.id,
-
-      userId: user._id,
-      expireAt: new Date(req.decoded?.exp! * 1000),
-    });
-    return { message: "Done", access_token, refresh_token }
-
-  }
 
   //======================== forgetPassword =====================
 
@@ -290,7 +260,8 @@ export class UserService {
     if (!user) {
       throw new BadRequestException("User not found");
     }
-    await this.sendOtp(user._id, user.email,UserOtp.forgetPassword);
+
+    await this.sendOtp(user._id, user.email, UserOtp.forgetPassword);
 
 
     return { message: "Done" }
@@ -300,10 +271,19 @@ export class UserService {
 
   async updatePassword(body: updatePasswordDTO, req: UserReq) {
     const { oldPassword, newPassword } = body
+
+const revoked = await this.revokeTokenRepo.findOne({
+      userId: req.user._id,
+});
+
+if (revoked) {
+  throw new BadRequestException("Session expired. Please login again.");
+}
     const user = await this.userRepo.findById(req.user._id)
     if (!user) {
       throw new BadRequestException("user not found")
     }
+
     if (!await Compare({ plainText: oldPassword, hash: user.password })) {
       throw new BadRequestException("invalid password")
     }
@@ -342,6 +322,39 @@ export class UserService {
   }
 
 
+  //======================== refreshToken =====================
+
+  async refreshToken(req: UserReq) {
+
+    const user = req.user;
+    const access_token = await this.tokenService.GenerateToken({
+      payload: { userId: user._id, email: user.email },
+      options: {
+        secret: user.role === UserRoleEnum.Doctor ? process.env.ACCESS_TOKEN_DOCTOR!
+          : user.role === UserRoleEnum.Patient ? process.env.ACCESS_TOKEN_PATIENT!
+            : process.env.ACCESS_TOKEN_COMPANION!,
+        expiresIn: "1h"
+      }
+    });
+
+    const refresh_token = await this.tokenService.GenerateToken({
+      payload: { id: user._id, email: user.email },
+      options: {
+        secret: user.role == UserRoleEnum.Doctor ? process.env.REFRESH_TOKEN_DOCTOR!
+          : user.role === UserRoleEnum.Patient ? process.env.REFRESH_TOKEN_PATIENT!
+            : process.env.REFRESH_TOKEN_COMPANION!,
+        expiresIn: "1y"
+      }
+    });
+    await this.revokeTokenRepo.create({
+      tokenId: req.decoded.id,
+
+      userId: user._id,
+      expireAt: new Date(req.decoded?.exp! * 1000),
+    });
+    return { message: "Done", access_token, refresh_token }
+
+  }
   //======================== logOut ====================
 
   async logOut(body: logOutDTO, req: UserReq) {

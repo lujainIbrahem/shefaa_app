@@ -42,11 +42,11 @@ login(
 }
 
 @Auth({ roles: [], typeToken: UserTokenTypeEnum.refresh }) 
-@Patch("revokeToken")
-revokeToken(
+@Patch("refreshToken")
+refreshToken(
     @Req() req:UserReq
 ){
-    return this.userService.revokeToken(req)
+    return this.userService.refreshToken(req)
 }
 
 @Post("forgetPassword")
@@ -74,7 +74,7 @@ resetPassword(
     return this.userService.resetPassword(body)
 }
 
-@Auth({ roles: [], typeToken: UserTokenTypeEnum.refresh }) // يسمح للـ refresh token
+@Auth({ roles: [], typeToken: UserTokenTypeEnum.refresh }) 
 @Post("logOut")
 logOut(
     @Body() body:logOutDTO,
@@ -83,20 +83,6 @@ logOut(
     return this.userService.logOut(body,req)
 }
 
-/*
-@Auth({
-    roles:[UserRoleEnum.Doctor],
-    typeToken:UserTokenTypeEnum.access
-})
-@Get("profile")
-profile(
-    @User() user:HUserDocument,
-){
-    return {message:"done" , user}
-}
 
-
-
-*/
 
 }
