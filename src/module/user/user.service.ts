@@ -181,21 +181,27 @@ export class UserService {
       throw new BadRequestException("User not found or already exists");
     }
 
-    const otpArray = user.otp as any[];
+   
 
-    if (!otpArray?.length) {
-      throw new BadRequestException("OTP not found or expired, please resend OTP");
-    }
+const otpRecord = await this.OtpRepo.findOne({
+  createdBy: user._id,
+  type: UserOtp.confirmEmail,
+});
 
-    const otpRecord = otpArray[0];
+if (!otpRecord) {
+  throw new BadRequestException("OTP not found");
+}
 
-    if (!otpRecord?.code) {
-      throw new BadRequestException("Invalid OTP data");
-    }
+const isValid = await Compare({
+  plainText: code,
+  hash: otpRecord.code,
+});
 
-    if (code !== otpRecord.code) {
-      throw new BadRequestException("Invalid OTP");
-    }
+if (!isValid) {
+  throw new BadRequestException("Invalid OTP");
+}
+
+
 
     user.confirmed = true;
     await user.save();
