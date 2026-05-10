@@ -30,9 +30,11 @@ export class availableTimeController {
     })
     @Get("AvailableTime")
     getAvailableTime(
-        @Query('date') date: string
+        @Query('date') date: string,
+        @Req() req: UserReq,
+
     ) {
-        return this.availableTimeService.getAvailableTime(date)
+        return this.availableTimeService.getAvailableTime(date, req)
     }
     //======================== getAvailableTimeId =====================
     @Auth({
@@ -41,9 +43,12 @@ export class availableTimeController {
     })
     @Get("AvailableTime/:id")
     getAvailableTimeId(
+        @Req() req: UserReq,
         @Query('date') date: string,
-        @Param() param: doctorIdDTO
+        @Param() param: doctorIdDTO,
+
+
     ) {
-        return this.availableTimeService.getAvailableTimeId(date, param);
+        return this.availableTimeService.getAvailableTimeId(req, date, param);
     }
 }

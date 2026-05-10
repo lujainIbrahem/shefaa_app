@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { appointmentRepo, UserRepo } from '../Db';
+import { appointmentRepo, revokeTokenRepo, UserRepo } from '../Db';
 import { Types } from 'mongoose';
 import { UserReq } from 'src/common/interfaces';
 import { availableTimeRepo } from '../Db/repositories/availableTime.repo';
@@ -14,25 +14,36 @@ export class appointmentService {
     private readonly availableTimeRepo: availableTimeRepo,
     private readonly appointmentRepo: appointmentRepo,
     private tokenService: TokenService,
+    private readonly revokeTokenRepo: revokeTokenRepo,
+
 
 
   ) { }
 
+  private async revoke(req: UserReq) {
+    const revoked = await this.revokeTokenRepo.findOne({ tokenId: req.decoded.jwtid });
+
+    if (revoked) {
+      throw new BadRequestException("Session expired. Please login again.");
+    }
+
+  }
   //================== createAppointment =====================
   //بظبط المواعيد
   async createAppointment(req: UserReq, body: createAppointmentDTO) {
+        await this.revoke(req)
     const { availableId } = body;
-   let patientId = req.user._id;
+    let patientId = req.user._id;
 
-if (req.user.role === UserRoleEnum.Companion) {
-  const companion = await this.userRepo.findById(req.user._id);
+    if (req.user.role === UserRoleEnum.Companion) {
+      const companion = await this.userRepo.findById(req.user._id);
 
-  if (!companion?.patientId) {
-    throw new BadRequestException("No patient linked to this companion");
-  }
+      if (!companion?.patientId) {
+        throw new BadRequestException("No patient linked to this companion");
+      }
 
-  patientId = companion.patientId;
-}
+      patientId = companion.patientId;
+    }
     const available = await this.availableTimeRepo.findById(availableId);
     if (!available) throw new BadRequestException("Slot not found");
     if (available.isBooked) throw new BadRequestException("Slot already booked");
@@ -85,6 +96,7 @@ if (req.user.role === UserRoleEnum.Companion) {
   //================== cancelAppointment =====================
 
   async cancelAppointment(req: UserReq, param: appointmentIdDTO) {
+        await this.revoke(req)
     const appointment = await this.appointmentRepo.findById(param.id)
     if (!appointment) {
       throw new BadRequestException("this aapointment not exist")
@@ -110,73 +122,74 @@ if (req.user.role === UserRoleEnum.Companion) {
 
   //================== getAppointment =====================
 
-async getAppointment(req: UserReq) {
-  const user = await this.userRepo.findById(req.user._id);
+  async getAppointment(req: UserReq) {
+        await this.revoke(req)
+    const user = await this.userRepo.findById(req.user._id);
 
-  if (!user) {
-    throw new BadRequestException("user not found");
-  }
-
-  let patientId = user._id;
-
-  // Companion → map to patient
-  if (user.role === UserRoleEnum.Companion) {
-    if (!user.patientId) {
-      throw new BadRequestException("No patient linked to this companion");
+    if (!user) {
+      throw new BadRequestException("user not found");
     }
-    patientId = user.patientId;
-  }
 
-  if (
-    user.role === UserRoleEnum.Patient ||
-    user.role === UserRoleEnum.Companion
-  ) {
-    const appointments = await this.appointmentRepo.find({
-      filter: {
-        patientId,
-        status: statusType.confirmed
-      },
-      select: "-__v",
-      populate: [
-        {
-          path: "doctorId",
-          select: "fName lName specialization email phone price"
+    let patientId = user._id;
+
+    // Companion → map to patient
+    if (user.role === UserRoleEnum.Companion) {
+      if (!user.patientId) {
+        throw new BadRequestException("No patient linked to this companion");
+      }
+      patientId = user.patientId;
+    }
+
+    if (
+      user.role === UserRoleEnum.Patient ||
+      user.role === UserRoleEnum.Companion
+    ) {
+      const appointments = await this.appointmentRepo.find({
+        filter: {
+          patientId,
+          status: statusType.confirmed
         },
-        {
-          path: "availableId",
-          select: "start end isBooked"
-        }
-      ]
-    });
+        select: "-__v",
+        populate: [
+          {
+            path: "doctorId",
+            select: "fName lName specialization email phone price"
+          },
+          {
+            path: "availableId",
+            select: "start end isBooked"
+          }
+        ]
+      });
 
-    return { message: "Done", appointments };
-  }
+      return { message: "Done", appointments };
+    }
 
-  // DOCTOR
-  if (user.role === UserRoleEnum.Doctor) {
-    const appointments = await this.appointmentRepo.find({
-      filter: {
-        doctorId: user._id,
-        status: statusType.confirmed
-      },
-      select: "-__v",
-      populate: [
-        {
-          path: "patientId",
-          select: "fName lName currentMedication age phone address disease blood"
+    // DOCTOR
+    if (user.role === UserRoleEnum.Doctor) {
+      const appointments = await this.appointmentRepo.find({
+        filter: {
+          doctorId: user._id,
+          status: statusType.confirmed
         },
-        {
-          path: "availableId",
-          select: "start end isBooked"
-        }
-      ]
-    });
+        select: "-__v",
+        populate: [
+          {
+            path: "patientId",
+            select: "fName lName currentMedication age phone address disease blood"
+          },
+          {
+            path: "availableId",
+            select: "start end isBooked"
+          }
+        ]
+      });
 
-    return { message: "Done", appointments };
+      return { message: "Done", appointments };
+    }
+
+    throw new BadRequestException("Not allowed");
   }
-
-  throw new BadRequestException("Not allowed");
-}
 }
 
 
