@@ -122,14 +122,10 @@ export class profileService {
 
   async getprofileId(req: UserReq, params: profileDTO) {
     await this.revoke(req)
-
-
     const user = await this.userRepo.findById(params.id, "-password -updatedAt -createdAt -provider -confirmed");
-
     if (!user) {
       throw new BadRequestException("user not found");
     }
-
     // Doctor check
     if (req.user.role === UserRoleEnum.Doctor) {
       if (user.doctorId && user.doctorId.toString() !== req.user._id.toString()) {
@@ -149,8 +145,6 @@ export class profileService {
   //======================== getDoctorById  =====================
 
   async getDoctorById(req: UserReq, params: profileDTO) {
-    await this.revoke(req)
-
 
     const doctor = await this.userRepo.findOne
       (
