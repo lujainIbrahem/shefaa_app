@@ -1,8 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { revokeTokenRepo, UserRepo } from '../Db';
+import { revokeTokenRepo, UserRepo, availableTimeRepo} from '../Db';
 import { Types } from 'mongoose';
-import { UserReq } from 'src/common/interfaces';
-import { availableTimeRepo } from '../Db/repositories/availableTime.repo';
+import type{ UserReq } from 'src/common/interfaces';
 import { createAvailableTimeDTO, doctorIdDTO } from './availableTimeDTO';
 import { TokenService } from 'src/common/service/token.service';
 

@@ -28,8 +28,7 @@ export class ProfileController {
 
     @Get("getProfileDoctor")
     getProfileDoctor(
-                @Req() req: UserReq,
-
+        @Req() req: UserReq,
     ) {
         return this.profileService.getProfileDoctor(req)
     }

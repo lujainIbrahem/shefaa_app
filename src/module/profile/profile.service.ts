@@ -82,7 +82,7 @@ export class profileService {
   //======================== getProfilePatientForDoctor =====================
 
   async getDoctorPatients(req: UserReq) {
-       await this.revoke(req)
+    await this.revoke(req)
 
 
     const user = await this.userRepo.findById(req.user._id, "-password");
@@ -125,7 +125,7 @@ export class profileService {
   //======================== getProfileId =====================
 
   async getprofileId(req: UserReq, params: profileDTO) {
-     await this.revoke(req)
+    await this.revoke(req)
 
 
     const user = await this.userRepo.findById(params.id, "-password -updatedAt -createdAt -provider -confirmed");
@@ -153,7 +153,7 @@ export class profileService {
   //======================== getDoctorById  =====================
 
   async getDoctorById(req: UserReq, params: profileDTO) {
-     await this.revoke(req)
+    await this.revoke(req)
 
 
     const doctor = await this.userRepo.findOne
@@ -176,7 +176,7 @@ export class profileService {
   //======================== updateProfile =====================
 
   async updateProfile(req: UserReq, body: updateProfileDTO) {
-       await this.revoke(req)
+    await this.revoke(req)
 
 
     const { email, oldPassword, newPassword, ...profile } = body
