@@ -39,21 +39,18 @@ export class profileService {
 
   }
 
-  private async revoke(
-   userId: Types.ObjectId) {
-    const revoked = await this.revokeTokenRepo.findOne({
-    userId
-});
+  private async revoke(req: UserReq) {
+    const revoked = await this.revokeTokenRepo.findOne({ tokenId: req.decoded.jwtid });
 
-if (revoked) {
-  throw new BadRequestException("Session expired. Please login again.");
-}
+    if (revoked) {
+      throw new BadRequestException("Session expired. Please login again.");
+    }
 
   }
   //======================== getProfileByLogin =====================
 
   async getProfile(req: UserReq) {
-      await this.revoke(req.user._id)
+    await this.revoke(req)
 
     const user = await this.userRepo.findById(req.user._id, "-password");
     if (!user) {
@@ -67,7 +64,7 @@ if (revoked) {
   //======================== getProfileByDoctor =====================
 
   async getProfileDoctor(req: UserReq) {
-        await this.revoke(req.user._id)
+    await this.revoke(req)
 
     const doctors = await this.userRepo.find({
       filter: { role: UserRoleEnum.Doctor },
@@ -85,7 +82,8 @@ if (revoked) {
   //======================== getProfilePatientForDoctor =====================
 
   async getDoctorPatients(req: UserReq) {
-        await this.revoke(req.user._id)
+       await this.revoke(req)
+
 
     const user = await this.userRepo.findById(req.user._id, "-password");
 
@@ -99,7 +97,7 @@ if (revoked) {
       patients = await this.userRepo.find({
         filter: {
           role: UserRoleEnum.Patient,
-          doctorId:user._id
+          doctorId: user._id
         },
         select: "-password -provider"
       });
@@ -127,7 +125,8 @@ if (revoked) {
   //======================== getProfileId =====================
 
   async getprofileId(req: UserReq, params: profileDTO) {
-        await this.revoke(req.user._id)
+     await this.revoke(req)
+
 
     const user = await this.userRepo.findById(params.id, "-password -updatedAt -createdAt -provider -confirmed");
 
@@ -154,7 +153,8 @@ if (revoked) {
   //======================== getDoctorById  =====================
 
   async getDoctorById(req: UserReq, params: profileDTO) {
-        await this.revoke(req.user._id)
+     await this.revoke(req)
+
 
     const doctor = await this.userRepo.findOne
       (
@@ -176,7 +176,8 @@ if (revoked) {
   //======================== updateProfile =====================
 
   async updateProfile(req: UserReq, body: updateProfileDTO) {
-        await this.revoke(req.user._id)
+       await this.revoke(req)
+
 
     const { email, oldPassword, newPassword, ...profile } = body
 
@@ -192,7 +193,7 @@ if (revoked) {
       }
       user.email = email
       user.confirmed = false
-    await this.sendOtp(user._id, user.email,UserOtp.confirmEmail);
+      await this.sendOtp(user._id, user.email, UserOtp.confirmEmail);
     }
 
     if ((oldPassword && !newPassword) || (!oldPassword && newPassword)) {
@@ -204,7 +205,7 @@ if (revoked) {
         throw new BadRequestException("invalid password")
       }
       user.password = newPassword
-    await this.sendOtp(user._id, user.email, UserOtp.confirmEmail);
+      await this.sendOtp(user._id, user.email, UserOtp.confirmEmail);
     }
     Object.assign(user, profile)
     await user.save()
@@ -215,16 +216,17 @@ if (revoked) {
   //======================== updateProfileId =====================
 
   async updateProfileId(req: UserReq, body: updateProfileIdDTO, params: profileDTO) {
-        await this.revoke(req.user._id)
+    await this.revoke(req)
+
 
     const { ...profile } = body
     const user = await this.userRepo.findById(params.id, "-password")
     if (!user) {
       throw new BadRequestException("user not found")
     }
-      if (user.role !== UserRoleEnum.Patient) {
-    throw new ForbiddenException("You can only update patients");
-  }
+    if (user.role !== UserRoleEnum.Patient) {
+      throw new ForbiddenException("You can only update patients");
+    }
 
     if (req.user.role === UserRoleEnum.Doctor) {
       if (user.doctorId?.toString() !== req.user._id.toString()) {

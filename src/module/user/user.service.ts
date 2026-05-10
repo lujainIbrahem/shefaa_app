@@ -7,6 +7,7 @@ import { Types } from 'mongoose';
 import { Compare, eventEmitter } from 'src/utils';
 import { UserReq } from 'src/common/interfaces';
 import { generateOTP } from "src/common";
+import { randomUUID } from "crypto";
 
 @Injectable()
 export class UserService {
@@ -170,7 +171,6 @@ export class UserService {
 
   async confirmEmail(body: confirmEmailDTO) {
     const { email, code } = body;
-
     const user = await this.userRepo.findOne(
       { email, confirmed: false },
       undefined,
@@ -181,13 +181,10 @@ export class UserService {
       throw new BadRequestException("User not found or already exists");
     }
 
-   
-
 const otpRecord = await this.OtpRepo.findOne({
   createdBy: user._id,
   type: UserOtp.confirmEmail,
 });
-
 if (!otpRecord) {
   throw new BadRequestException("OTP not found");
 }
@@ -231,19 +228,19 @@ if (!isValid) {
     if (!await Compare({ plainText: password, hash: user.password })) {
       throw new BadRequestException("Invalid password");
     }
-
+const jwtid = randomUUID();
     const access_token = await this.tokenService.GenerateToken({
-      payload: { userId: user._id, email: user.email },
+      payload: { userId: user._id, email: user.email,jwtid },
       options: {
         secret: user.role === UserRoleEnum.Doctor ? process.env.ACCESS_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.ACCESS_TOKEN_PATIENT!
             : process.env.ACCESS_TOKEN_COMPANION!,
-        expiresIn: "1h"
+        expiresIn: "15m"
       }
     });
 
     const refresh_token = await this.tokenService.GenerateToken({
-      payload: { id: user._id, email: user.email },
+      payload: { userId: user._id, email: user.email,jwtid },
       options: {
         secret: user.role == UserRoleEnum.Doctor ? process.env.REFRESH_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.REFRESH_TOKEN_PATIENT!
@@ -278,13 +275,11 @@ if (!isValid) {
   async updatePassword(body: updatePasswordDTO, req: UserReq) {
     const { oldPassword, newPassword } = body
 
-const revoked = await this.revokeTokenRepo.findOne({
-      userId: req.user._id,
-});
+    const revoked = await this.revokeTokenRepo.findOne({ tokenId: req.decoded.jwtid });
 
-if (revoked) {
-  throw new BadRequestException("Session expired. Please login again.");
-}
+    if (revoked) {
+      throw new BadRequestException("Session expired. Please login again.");
+    }
     const user = await this.userRepo.findById(req.user._id)
     if (!user) {
       throw new BadRequestException("user not found")
@@ -331,20 +326,20 @@ if (revoked) {
   //======================== refreshToken =====================
 
   async refreshToken(req: UserReq) {
-
+const jwtid = randomUUID();
     const user = req.user;
     const access_token = await this.tokenService.GenerateToken({
-      payload: { userId: user._id, email: user.email },
+      payload: { userId: user._id, email: user.email,jwtid },
       options: {
         secret: user.role === UserRoleEnum.Doctor ? process.env.ACCESS_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.ACCESS_TOKEN_PATIENT!
             : process.env.ACCESS_TOKEN_COMPANION!,
-        expiresIn: "1h"
+        expiresIn: "15m"
       }
     });
 
     const refresh_token = await this.tokenService.GenerateToken({
-      payload: { id: user._id, email: user.email },
+      payload: { id: user._id, email: user.email,jwtid },
       options: {
         secret: user.role == UserRoleEnum.Doctor ? process.env.REFRESH_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.REFRESH_TOKEN_PATIENT!
@@ -353,7 +348,7 @@ if (revoked) {
       }
     });
     await this.revokeTokenRepo.create({
-      tokenId: req.decoded.id,
+      tokenId: req.decoded.jwtid,
 
       userId: user._id,
       expireAt: new Date(req.decoded?.exp! * 1000),
@@ -380,12 +375,12 @@ if (revoked) {
       return { message: "success ,logout from all devices" }
     }
 
-    if (!req.decoded.id) {
+    if (!req.decoded.jwtid) {
       throw new BadRequestException("Invalid refresh token");
     }
 
     await this.revokeTokenRepo.create({
-      tokenId: req.decoded.id,
+      tokenId: req.decoded.jwtid,
       userId: req.user._id,
       expireAt: new Date(req.decoded?.exp! * 1000),
     })
