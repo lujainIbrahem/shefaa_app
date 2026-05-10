@@ -9,15 +9,15 @@ export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   // ====================== login with Google via idToken ======================
-@Post("google")
-googleLogin(@Body() body: GoogleLoginDTO) {
-  return this.authService.loginWithGoogle(body);
-}
+  @Post("google")
+  googleLogin(@Body() body: GoogleLoginDTO) {
+    return this.authService.loginWithGoogle(body);
+  }
   // ====================== completeProfile ======================
   @Auth({
-        roles: [],
-        typeToken: UserTokenTypeEnum.access
-    })
+    roles: [],
+    typeToken: UserTokenTypeEnum.access
+  })
   @Patch('completeProfile')
   async completeProfile(
     @Req() req: UserReq,

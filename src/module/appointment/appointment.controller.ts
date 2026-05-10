@@ -25,7 +25,7 @@ export class appointmentController {
 
     //======================== cancelAppointment ====================
     @Auth({
-        roles: [],
+        roles: [UserRoleEnum.Patient, UserRoleEnum.Companion,UserRoleEnum.Doctor],
         typeToken: UserTokenTypeEnum.access
     })
     @Patch("cancelAppointment/:id")

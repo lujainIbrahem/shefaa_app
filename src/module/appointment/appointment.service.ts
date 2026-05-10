@@ -100,13 +100,20 @@ export class appointmentService {
     if (!appointment) {
       throw new BadRequestException("this aapointment not exist")
     }
-    const isAllowed = appointment.doctorId.toString() === req.user._id.toString() ||
-      appointment.patientId.toString() === req.user._id.toString()
-    if (!isAllowed) {
-      throw new ForbiddenException("Not allowed to cancel this appointment");
+    const isDoctor =
+    appointment.doctorId.toString() === req.user._id.toString();
 
-    }
+  const isPatient =
+    appointment.patientId.toString() === req.user._id.toString();
 
+  const isCompanion =
+    req.user.role === UserRoleEnum.Companion;
+
+  if (!isDoctor && !isPatient && !isCompanion) {
+    throw new ForbiddenException(
+      "Not allowed to cancel this appointment"
+    );
+  }
     appointment.status = statusType.cancelled
     await appointment.save()
 

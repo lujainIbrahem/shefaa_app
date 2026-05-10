@@ -14,11 +14,11 @@ export class AuthService {
     private readonly userRepo: UserRepo,
     private tokenService: TokenService,
   ) { }
-private client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  private client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-async loginWithGoogle(body: GoogleLoginDTO) {
-  const{idToken , role} =body
-      if (!idToken) {
+  async loginWithGoogle(body: GoogleLoginDTO) {
+    const { idToken, role } = body
+    if (!idToken) {
       throw new BadRequestException("idToken is required");
     }
 
@@ -33,28 +33,28 @@ async loginWithGoogle(body: GoogleLoginDTO) {
       throw new BadRequestException("Invalid Google token");
     }
 
-const email = payload.email;
+    const email = payload.email;
 
-const fName = payload.given_name || payload.name?.split(" ")[0] || "User";
-const lName = payload.family_name || payload.name?.split(" ")[1] || "Google";
+    const fName = payload.given_name || payload.name?.split(" ")[0] || "User";
+    const lName = payload.family_name || payload.name?.split(" ")[1] || "Google";
     // 1️⃣ check user
     let user = await this.userRepo.findOne({ email });
 
     // 2️⃣ create if not exists
     if (!user) {
-     user = await this.userRepo.create({
-  email,
-  fName,
-  lName,
-  role,
-  confirmed: true,
-});
+      user = await this.userRepo.create({
+        email,
+        fName,
+        lName,
+        role,
+        confirmed: true,
+      });
     }
 
     // 3️⃣ generate session
-  const jwtid = randomUUID();
+    const jwtid = randomUUID();
     const access_token = await this.tokenService.GenerateToken({
-      payload: { userId: user._id, email: user.email,jwtid },
+      payload: { userId: user._id, email: user.email, jwtid },
       options: {
         secret: user.role === UserRoleEnum.Doctor ? process.env.ACCESS_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.ACCESS_TOKEN_PATIENT!
@@ -64,7 +64,7 @@ const lName = payload.family_name || payload.name?.split(" ")[1] || "Google";
     });
 
     const refresh_token = await this.tokenService.GenerateToken({
-      payload: { userId: user._id, email: user.email,jwtid },
+      payload: { userId: user._id, email: user.email, jwtid },
       options: {
         secret: user.role == UserRoleEnum.Doctor ? process.env.REFRESH_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.REFRESH_TOKEN_PATIENT!
@@ -93,8 +93,8 @@ const lName = payload.family_name || payload.name?.split(" ")[1] || "Google";
 
     user.address = address || ""
     user.phone = phone || ""
-    if(gender){user.gender = gender }
-    
+    if (gender) { user.gender = gender }
+
     if (user.role === "Doctor") {
       if (!specialization) {
         throw new BadRequestException("Specialization is required")
@@ -112,47 +112,47 @@ const lName = payload.family_name || payload.name?.split(" ")[1] || "Google";
       user.disease = disease
       user.age = age
       user.currentMedication = currentMedication
-if (doctorId) {
-  const doctor = await this.userRepo.findOne({
+      if (doctorId) {
+        const doctor = await this.userRepo.findOne({
           _id: doctorId,
           role: UserRoleEnum.Doctor
         })
-       if(!doctor) throw new BadRequestException("doctorId not found")
+        if (!doctor) throw new BadRequestException("doctorId not found")
 
-  user.doctorId = new Types.ObjectId(doctorId);
-}
-if (companionId) {
-  const Companion = await this.userRepo.findOne({
+        user.doctorId = new Types.ObjectId(doctorId);
+      }
+      if (companionId) {
+        const Companion = await this.userRepo.findOne({
           _id: companionId,
           role: UserRoleEnum.Companion
         })
-       if(!Companion) throw new BadRequestException("companionId not found")
+        if (!Companion) throw new BadRequestException("companionId not found")
 
-  user.companionId = new Types.ObjectId(companionId);
-}
+        user.companionId = new Types.ObjectId(companionId);
+      }
     }
-    
+
     if (user.role === "Companion") {
-      if (!patientId || !experienceLevel || !relationPatient ) {
+      if (!patientId || !experienceLevel || !relationPatient) {
         throw new BadRequestException("Companion's field is required")
       }
       user.experienceLevel = experienceLevel
       user.relationPatient = relationPatient
-if (patientId) {
-  const patient = await this.userRepo.findOne({
+      if (patientId) {
+        const patient = await this.userRepo.findOne({
           _id: patientId,
           role: UserRoleEnum.Patient
         })
-       if(!patient) throw new BadRequestException("patientId not found")
+        if (!patient) throw new BadRequestException("patientId not found")
 
-  user.patientId = new Types.ObjectId(patientId);
-}
+        user.patientId = new Types.ObjectId(patientId);
+      }
 
-}
-await user.save();
-return {message :"complete information is available"}
+    }
+    await user.save();
+    return { message: "complete information is available" }
   }
-  
+
 
 
 
