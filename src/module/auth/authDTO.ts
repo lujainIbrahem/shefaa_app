@@ -4,7 +4,12 @@ import { bloodType, GenderType, specializationType, UserRoleEnum } from "src/com
 
 
 export class GoogleLoginDTO {
+
+  @IsString()
+  @IsNotEmpty()
   idToken: string;
+
+  @IsEnum(UserRoleEnum)
   role: UserRoleEnum;
 }
 
