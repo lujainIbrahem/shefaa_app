@@ -4,8 +4,9 @@ import { TokenService } from "src/common/service/token.service";
 import { GenderType, specializationType, userProvider, UserRoleEnum } from "src/common";
 import { OAuth2Client } from 'google-auth-library';
 import { UserReq } from "src/common/interfaces";
-import { completeProfileDTO } from "./authDTO";
+import { completeProfileDTO, GoogleLoginDTO } from "./authDTO";
 import { Types } from "mongoose";
+import { randomUUID } from "crypto";
 
 @Injectable()
 export class AuthService {
@@ -13,72 +14,57 @@ export class AuthService {
     private readonly userRepo: UserRepo,
     private tokenService: TokenService,
   ) { }
+private client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-  async loginWithGmail(idToken: string, role: UserRoleEnum) {
+async loginWithGoogle(body: GoogleLoginDTO) {
+  const{idToken , role} =body
+      if (!idToken) {
+      throw new BadRequestException("idToken is required");
+    }
 
-    // 1. التعديل الأول: أضفنا await قبل الـ client.verifyIdToken
-    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-    const ticket = await client.verifyIdToken({
+    const ticket = await this.client.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID, // خليها نفس الـ Client ID
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
+
     const payload = ticket.getPayload();
-    if (!payload) {
-      throw new UnauthorizedException('Invalid Google Token');
+
+    if (!payload?.email) {
+      throw new BadRequestException("Invalid Google token");
     }
 
+const email = payload.email;
 
-    const email = payload.email;
-    const name = payload.name || "User";
-    const given_name = payload.given_name;
-    const family_name = payload.family_name;
-    const email_verified = payload.email_verified || false;
-
-    if (!email) {
-      throw new BadRequestException('Email not provided by Google');
-    }
-
-    // ====================== check if user exists ======================
-
+const fName = payload.given_name || payload.name?.split(" ")[0] || "User";
+const lName = payload.family_name || payload.name?.split(" ")[1] || "Google";
+    // 1️⃣ check user
     let user = await this.userRepo.findOne({ email });
-    const roleUser = user?.role
 
+    // 2️⃣ create if not exists
     if (!user) {
-      // ✅ Create new user
-      user = await this.userRepo.create({
-        fName: given_name,
-        lName: family_name,
-        userName: name,
-        email: email,
-        confirmed: email_verified,
-        provider: userProvider.google,
-        role: role,
-      });
-    } else {
-      // ✅ لو موجود
-      if (user.provider !== userProvider.google) {
-        throw new BadRequestException(
-          "This email is registered via system. Please login with your password."
-        );
-      }
+     user = await this.userRepo.create({
+  email,
+  fName,
+  lName,
+  role,
+  confirmed: true,
+});
     }
 
-
-    // ====================== generate JWTs ======================
-
+    // 3️⃣ generate session
+  const jwtid = randomUUID();
     const access_token = await this.tokenService.GenerateToken({
-      payload: { userId: user._id, email: user.email },
+      payload: { userId: user._id, email: user.email,jwtid },
       options: {
         secret: user.role === UserRoleEnum.Doctor ? process.env.ACCESS_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.ACCESS_TOKEN_PATIENT!
             : process.env.ACCESS_TOKEN_COMPANION!,
-        expiresIn: "1h"
+        expiresIn: "15m"
       }
     });
 
     const refresh_token = await this.tokenService.GenerateToken({
-      payload: { id: user._id, email: user.email },
+      payload: { userId: user._id, email: user.email,jwtid },
       options: {
         secret: user.role == UserRoleEnum.Doctor ? process.env.REFRESH_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.REFRESH_TOKEN_PATIENT!
@@ -87,9 +73,13 @@ export class AuthService {
       }
     });
 
-    return { message: 'Google Auth Success', access_token, refresh_token, roleUser };
+    return {
+      message: "Google login success",
+      access_token,
+      refresh_token,
+      user,
+    };
   }
-
 
   async completeProfile(req: UserReq, body: completeProfileDTO) {
     const { age, gender, phone, specialization, currentMedication, disease, address, blood, price, patientId, relationPatient,

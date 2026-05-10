@@ -3,16 +3,11 @@ import { Types } from "mongoose";
 import { bloodType, GenderType, specializationType, UserRoleEnum } from "src/common";
 
 
-export class loginWithGmail {
-
-    @IsString()
-    @IsNotEmpty({ message: "idToken is required" })
-    idToken: string;
-
-    @IsEnum(UserRoleEnum)
-    role: UserRoleEnum;
-
+export class GoogleLoginDTO {
+  idToken: string;
+  role: UserRoleEnum;
 }
+
 
 export class completeProfileDTO {
 

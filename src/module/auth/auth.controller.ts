@@ -1,20 +1,18 @@
 import { Controller, Get, Post, Body, Res, Req, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { completeProfileDTO, loginWithGmail } from './authDTO';
+import { completeProfileDTO, GoogleLoginDTO } from './authDTO';
 import type { UserReq } from 'src/common/interfaces';
-import { Auth, UserTokenTypeEnum } from 'src/common';
+import { Auth, UserRoleEnum, UserTokenTypeEnum } from 'src/common';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   // ====================== login with Google via idToken ======================
-  @Post('loginWithGmail')
-  async loginWithGmail(@Body() body: loginWithGmail,
-  ) {
-    return this.authService.loginWithGmail(body.idToken, body.role);
-  }
-
+@Post("google")
+googleLogin(@Body() body: GoogleLoginDTO) {
+  return this.authService.loginWithGoogle(body);
+}
   // ====================== completeProfile ======================
   @Auth({
         roles: [],
