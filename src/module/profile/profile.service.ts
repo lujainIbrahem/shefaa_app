@@ -64,8 +64,7 @@ export class profileService {
   //======================== getProfileByDoctor =====================
 
   async getProfileDoctor(req: UserReq) {
-    await this.revoke(req)
-
+ //   await this.revoke(req)
     const doctors = await this.userRepo.find({
       filter: { role: UserRoleEnum.Doctor },
       select: "-password"
@@ -73,10 +72,7 @@ export class profileService {
     if (doctors.length === 0) {
       throw new BadRequestException("Doctors not found")
     }
-
     return { message: "Done", doctors }
-
-
   }
 
   //======================== getProfilePatientForDoctor =====================
