@@ -2,7 +2,7 @@ import { TokenService } from '../../common/service/token.service';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { availableTimeRepo, OtpRepo, revokeTokenRepo, UserRepo } from '../Db';
 import { confirmEmailDTO, forgetPasswordDTO, loginDTO, logOutDTO, resendOtpDTO, resetPasswordDTO, signUpDTO, updatePasswordDTO } from './signUpDTO';
-import { flagType, GenderType, UserOtp, UserRoleEnum } from 'src/common/enums';
+import { flagType, GenderType, UserOtp, userProvider, UserRoleEnum } from 'src/common/enums';
 import { Types } from 'mongoose';
 import { Compare, eventEmitter } from 'src/utils';
 import { UserReq } from 'src/common/interfaces';
@@ -181,22 +181,22 @@ export class UserService {
       throw new BadRequestException("User not found or already exists");
     }
 
-const otpRecord = await this.OtpRepo.findOne({
-  createdBy: user._id,
-  type: UserOtp.confirmEmail,
-});
-if (!otpRecord) {
-  throw new BadRequestException("OTP not found");
-}
+    const otpRecord = await this.OtpRepo.findOne({
+      createdBy: user._id,
+      type: UserOtp.confirmEmail,
+    });
+    if (!otpRecord) {
+      throw new BadRequestException("OTP not found");
+    }
 
-const isValid = await Compare({
-  plainText: code,
-  hash: otpRecord.code,
-});
+    const isValid = await Compare({
+      plainText: code,
+      hash: otpRecord.code,
+    });
 
-if (!isValid) {
-  throw new BadRequestException("Invalid OTP");
-}
+    if (!isValid) {
+      throw new BadRequestException("Invalid OTP");
+    }
 
 
 
@@ -224,13 +224,19 @@ if (!isValid) {
     if (!user) {
       throw new BadRequestException("User not found");
     }
+
+    if (user?.provider === userProvider.google) {
+      throw new BadRequestException(
+        "This account uses Google login"
+      );
+    }
     const role = user.role
     if (!await Compare({ plainText: password, hash: user.password })) {
       throw new BadRequestException("Invalid password");
     }
-const jwtid = randomUUID();
+    const jwtid = randomUUID();
     const access_token = await this.tokenService.GenerateToken({
-      payload: { userId: user._id, email: user.email,jwtid },
+      payload: { userId: user._id, email: user.email, jwtid },
       options: {
         secret: user.role === UserRoleEnum.Doctor ? process.env.ACCESS_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.ACCESS_TOKEN_PATIENT!
@@ -240,7 +246,7 @@ const jwtid = randomUUID();
     });
 
     const refresh_token = await this.tokenService.GenerateToken({
-      payload: { userId: user._id, email: user.email,jwtid },
+      payload: { userId: user._id, email: user.email, jwtid },
       options: {
         secret: user.role == UserRoleEnum.Doctor ? process.env.REFRESH_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.REFRESH_TOKEN_PATIENT!
@@ -326,10 +332,10 @@ const jwtid = randomUUID();
   //======================== refreshToken =====================
 
   async refreshToken(req: UserReq) {
-const jwtid = randomUUID();
+    const jwtid = randomUUID();
     const user = req.user;
     const access_token = await this.tokenService.GenerateToken({
-      payload: { userId: user._id, email: user.email,jwtid },
+      payload: { userId: user._id, email: user.email, jwtid },
       options: {
         secret: user.role === UserRoleEnum.Doctor ? process.env.ACCESS_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.ACCESS_TOKEN_PATIENT!
@@ -339,7 +345,7 @@ const jwtid = randomUUID();
     });
 
     const refresh_token = await this.tokenService.GenerateToken({
-      payload: { id: user._id, email: user.email,jwtid },
+      payload: { id: user._id, email: user.email, jwtid },
       options: {
         secret: user.role == UserRoleEnum.Doctor ? process.env.REFRESH_TOKEN_DOCTOR!
           : user.role === UserRoleEnum.Patient ? process.env.REFRESH_TOKEN_PATIENT!

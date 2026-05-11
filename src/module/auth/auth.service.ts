@@ -48,9 +48,13 @@ export class AuthService {
         lName,
         role,
         confirmed: true,
+        profileCompleted:false,
+        provider: userProvider.google,
       });
     }
-
+   if (user.provider && user.provider !== userProvider.google) {
+  throw new BadRequestException("This account uses password login");
+}
     // 3️⃣ generate session
     const jwtid = randomUUID();
     const access_token = await this.tokenService.GenerateToken({
@@ -91,8 +95,8 @@ export class AuthService {
       throw new BadRequestException("user not found")
     }
 
-    user.address = address || ""
-    user.phone = phone || ""
+  if (address) user.address = address;
+if (phone) user.phone = phone;
     if (gender) { user.gender = gender }
 
     if (user.role === "Doctor") {
@@ -149,6 +153,7 @@ export class AuthService {
       }
 
     }
+    user.profileCompleted=true
     await user.save();
     return { message: "complete information is available" }
   }

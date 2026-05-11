@@ -55,6 +55,8 @@ export class User {
   @Prop({ type: Date, default: Date.now })
   changeCredentails: Date;
 
+  @Prop({ type: Boolean, default: false })
+  profileCompleted: boolean;
 
   // Doctor fields
   @Prop({ type: String, enum: specializationType })

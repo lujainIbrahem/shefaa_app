@@ -1,4 +1,4 @@
-import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from "class-validator"
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from "class-validator"
 import { Types } from "mongoose";
 import { bloodType, GenderType, specializationType, UserRoleEnum } from "src/common";
 
@@ -15,6 +15,8 @@ export class GoogleLoginDTO {
 
 
 export class completeProfileDTO {
+
+  
 
     @IsOptional()
     @IsString()
