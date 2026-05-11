@@ -39,22 +39,22 @@ export class AuthService {
     const lName = payload.family_name || payload.name?.split(" ")[1] || "Google";
     // 1️⃣ check user
     let user = await this.userRepo.findOne({ email });
-
-    // 2️⃣ create if not exists
-    if (!user) {
-      user = await this.userRepo.create({
-        email,
-        fName,
-        lName,
-        role,
-        confirmed: true,
-        profileCompleted:false,
-        provider: userProvider.google,
-      });
-    }
-   if (user.provider && user.provider !== userProvider.google) {
-  throw new BadRequestException("This account uses password login");
+if (user) {
+  if (user.provider !== userProvider.google) {
+    throw new BadRequestException("This account uses password login");
+  }
+} else {
+  user = await this.userRepo.create({
+    email,
+    fName,
+    lName,
+    role,
+    confirmed: true,
+    profileCompleted: false,
+    provider: userProvider.google,
+  });
 }
+  
     // 3️⃣ generate session
     const jwtid = randomUUID();
     const access_token = await this.tokenService.GenerateToken({
