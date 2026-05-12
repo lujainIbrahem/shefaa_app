@@ -52,8 +52,7 @@ export class AuthService {
         provider: userProvider.google,
       });
     }
-   // ✅ صح - نرمي خطأ لو الـ provider مش google
-if (user && user.provider !== userProvider.google) {
+   if (user.provider && user.provider !== userProvider.google) {
   throw new BadRequestException("This account uses password login");
 }
     // 3️⃣ generate session
@@ -78,22 +77,12 @@ if (user && user.provider !== userProvider.google) {
       }
     });
 
-   // ✅ نتحقق من profileCompleted الأول
-if (!user.profileCompleted) {
-  return {
-    message: "redirect to complete profile",
-    step: "COMPLETE_PROFILE",
-    user,
-  };
-}
-
-// ✅ لو مكتمل، نرجع الـ tokens
-return {
-  message: "Google login success",
-  access_token,
-  refresh_token,
-  user,
-};
+    return {
+      message: "Google login success",
+      access_token,
+      refresh_token,
+      user,
+    };
   }
 
   async completeProfile(req: UserReq, body: completeProfileDTO) {
@@ -110,62 +99,61 @@ return {
 if (phone) user.phone = phone;
     if (gender) { user.gender = gender }
 
-if (user.role === UserRoleEnum.Doctor) {
-      if (!specialization || !address || !phone) {
-        throw new BadRequestException("Specialization, address, and phone are required for doctors");
+    if (user.role === "Doctor") {
+      if (!specialization) {
+        throw new BadRequestException("Specialization is required")
       }
-      user.specialization = specialization;
-      if (price) user.price = price;
+      user.specialization = specialization
+      if (price) user.price = price
+
     }
 
-    // ✅ بيانات المريض
-    if (user.role === UserRoleEnum.Patient) {
+    if (user.role === "Patient") {
       if (!blood || !disease || !age || !currentMedication) {
-        throw new BadRequestException("Blood type, disease, age, and current medication are required for patients");
+        throw new BadRequestException("patient's field is required")
       }
-      user.blood = blood;
-      user.disease = disease;
-      user.age = age;
-      user.currentMedication = currentMedication;
-
+      user.blood = blood
+      user.disease = disease
+      user.age = age
+      user.currentMedication = currentMedication
       if (doctorId) {
         const doctor = await this.userRepo.findOne({
           _id: doctorId,
           role: UserRoleEnum.Doctor
-        });
-        if (!doctor) throw new BadRequestException("Doctor not found");
+        })
+        if (!doctor) throw new BadRequestException("doctorId not found")
+
         user.doctorId = new Types.ObjectId(doctorId);
       }
-
       if (companionId) {
-        const companion = await this.userRepo.findOne({
+        const Companion = await this.userRepo.findOne({
           _id: companionId,
           role: UserRoleEnum.Companion
-        });
-        if (!companion) throw new BadRequestException("Companion not found");
+        })
+        if (!Companion) throw new BadRequestException("companionId not found")
+
         user.companionId = new Types.ObjectId(companionId);
       }
     }
 
-    // ✅ بيانات المرافق
-    if (user.role === UserRoleEnum.Companion) {
+    if (user.role === "Companion") {
       if (!patientId || !experienceLevel || !relationPatient) {
-        throw new BadRequestException("Patient ID, experience level, and relation to patient are required for companions");
+        throw new BadRequestException("Companion's field is required")
+      }
+      user.experienceLevel = experienceLevel
+      user.relationPatient = relationPatient
+      if (patientId) {
+        const patient = await this.userRepo.findOne({
+          _id: patientId,
+          role: UserRoleEnum.Patient
+        })
+        if (!patient) throw new BadRequestException("patientId not found")
+
+        user.patientId = new Types.ObjectId(patientId);
       }
 
-      user.experienceLevel = experienceLevel;
-      user.relationPatient = relationPatient;
-
-      const patient = await this.userRepo.findOne({
-        _id: patientId,
-        role: UserRoleEnum.Patient
-      });
-      if (!patient) throw new BadRequestException("Patient not found");
-      user.patientId = new Types.ObjectId(patientId);
     }
-
-    // ✅ تحديث حالة اكتمال البروفايل
-    user.profileCompleted = true;
+    user.profileCompleted=true
     await user.save();
     return { message: "complete information is available" }
   }
