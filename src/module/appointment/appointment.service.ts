@@ -182,7 +182,7 @@ export class appointmentService {
         populate: [
           {
             path: "patientId",
-            select: "fName lName currentMedication age phone address disease blood"
+            select: "fName lName email currentMedication age phone address disease blood"
           },
           {
             path: "availableId",
