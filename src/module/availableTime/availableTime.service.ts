@@ -24,44 +24,59 @@ export class availableTimeService {
   //================== createAvailableTime =====================
 
   //بظبط المواعيد
-  async createAvailableTime(req: UserReq, body: createAvailableTimeDTO) {
-    const { date, start, end } = body
-    await this.revoke(req)
-    const doctorId = req.user._id
+async createAvailableTime(req: UserReq, body: createAvailableTimeDTO) {
+  const { date, start, end } = body
 
-    const slots: any[] = []
+  await this.revoke(req)
 
-    let current = new Date(`${date}T${start}:00`);
-    const endTime = new Date(`${date}T${end}:00`);
+  const selectedDate = new Date(date);
 
-    while (current < endTime) {
-      const next = new Date(current)
-      next.setMinutes(next.getMinutes() + 30)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-      const isExist = await this.availableTimeRepo.findOne({
+  if (selectedDate < today) {
+    throw new BadRequestException(
+      "Cannot create slots for past dates"
+    );
+  }
+
+  const doctorId = req.user._id
+
+  const slots: any[] = []
+
+  let current = new Date(`${date}T${start}:00`);
+  const endTime = new Date(`${date}T${end}:00`);
+
+  while (current < endTime) {
+
+    const next = new Date(current)
+    next.setMinutes(next.getMinutes() + 30)
+
+    const isExist = await this.availableTimeRepo.findOne({
+      doctorId,
+      date: new Date(date),
+      start: current,
+      end: next
+    })
+
+    if (!isExist) {
+      slots.push({
         doctorId,
         date: new Date(date),
         start: current,
-        end: next
+        end: next,
+        isBooked: false
       })
-
-      if (!isExist) {
-        slots.push({
-          doctorId,
-          date: new Date(date),
-          start: current,
-          end: next,
-          isBooked: false
-        })
-      }
-
-      current = next
     }
 
-    await this.availableTimeRepo.createMany(slots)
-
-    return { message: "Slots created successfully" }
+    current = next
   }
+
+  await this.availableTimeRepo.createMany(slots)
+
+  return { message: "Slots created successfully" }
+}
+  
   //================== getAvailableTime =====================
 
   //كل الدكاتره الفاضين
