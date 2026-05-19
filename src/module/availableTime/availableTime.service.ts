@@ -29,15 +29,16 @@ async createAvailableTime(req: UserReq, body: createAvailableTimeDTO) {
 
   await this.revoke(req)
 
-  const selectedDate = new Date(date);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const selectedDate = new Date(`${date}T00:00:00`)
 
-  if (selectedDate < today) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  if (selectedDate.getTime() < today.getTime()) {
     throw new BadRequestException(
       "Cannot create slots for past dates"
-    );
+    )
   }
 
   const doctorId = req.user._id
