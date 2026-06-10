@@ -232,7 +232,7 @@ export class seedDataService {
         role: UserRoleEnum.Doctor
       },
     ];
-    /*
+  
     const patientsData = [
       {
         confirmed: true,
@@ -406,7 +406,7 @@ export class seedDataService {
         doctorId: new Types.ObjectId("69fa66b335d89cf25d58bf03")
       }
     ];
-
+  /*
     const CompanionsData = [
       {
         confirmed: true,
@@ -566,13 +566,13 @@ export class seedDataService {
       await this.userRepo.create(doctor)
     }
 
-/*
+
     for (const patient of patientsData) {
       const exists = await this.userRepo.findOne({ email: patient.email })
       if (exists) continue
       await this.userRepo.create(patient)
     }
-
+/*
     for (const companion of CompanionsData) {
       const exists = await this.userRepo.findOne({ email: companion.email })
       if (exists) continue
