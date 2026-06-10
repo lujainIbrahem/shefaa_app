@@ -217,20 +217,7 @@ export class seedDataService {
         confirmed: true,
         role: UserRoleEnum.Doctor
       },
-       {
-        fName: "Bassant",
-        lName: "Barakat",
-        email: "Bassant@gmail.com",
-        password: "1Lojy@1234",
-        cPassword: "1Lojy@1234",
-        address: "2646+85H، صلاح سالم، رابعة، قسم الجيزة، محافظة الجيزة 3724302",
-        phone: "01232523252",
-        gender: GenderType.female,
-        price: 250,
-        specialization: specializationType.cardiologySpecialty,
-        confirmed: true,
-        role: UserRoleEnum.Doctor
-      },
+      
     ];
     const patientsData = [
       {
