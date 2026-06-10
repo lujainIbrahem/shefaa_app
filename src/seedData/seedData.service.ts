@@ -218,9 +218,9 @@ export class seedDataService {
         role: UserRoleEnum.Doctor
       },
        {
-        fName: "Rewan",
-        lName: "Mahmoud",
-        email: "RewanMahmoud@gmail.com",
+        fName: "Bassant",
+        lName: "Barakat",
+        email: "Bassant@gmail.com",
         password: "1Lojy@1234",
         cPassword: "1Lojy@1234",
         address: "2646+85H، صلاح سالم، رابعة، قسم الجيزة، محافظة الجيزة 3724302",
