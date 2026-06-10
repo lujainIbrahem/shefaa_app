@@ -15,8 +15,6 @@ export class appointmentService {
     private tokenService: TokenService,
     private readonly revokeTokenRepo: revokeTokenRepo,
 
-
-
   ) { }
 
   private async revoke(req: UserReq) {
@@ -44,21 +42,19 @@ export class appointmentService {
       patientId = companion.patientId;
     }
     const available = await this.availableTimeRepo.findById(availableId);
-const now = new Date();
 
-if (!available?.start) {
-  throw new BadRequestException(
-    "Invalid appointment time"
-  );
-}
-
-const appointmentDateTime = new Date(available.start!);
-
-if (appointmentDateTime < now) {
-  throw new BadRequestException(
-    "Cannot book past appointments"
-  );
-}
+    const now = new Date();
+    if (!available?.start) {
+      throw new BadRequestException(
+        "Invalid appointment time"
+      );
+    }
+    const appointmentDateTime = new Date(available.start!);
+    if (appointmentDateTime < now) {
+      throw new BadRequestException(
+        "Cannot book past appointments"
+      );
+    }
     if (!available) throw new BadRequestException("Slot not found");
     if (available.isBooked) throw new BadRequestException("Slot already booked");
 
