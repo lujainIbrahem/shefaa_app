@@ -248,7 +248,7 @@ export class seedDataService {
         age: 45,
         currentMedication: "Insulin",
         doctorId: new Types.ObjectId("6a29f734890ae57f137e0add"),
-        companionId: new Types.ObjectId("69fa69e6d2d22f612eb3cbe7")
+        companionId: new Types.ObjectId("6a29fe5a83e6804b9937e672")
 
       }
       , {
@@ -301,7 +301,7 @@ export class seedDataService {
         age: 29,
         currentMedication: "Iron supplements",
         doctorId: new Types.ObjectId("6a29f735890ae57f137e0ae0"),
-        companionId: new Types.ObjectId("69fa69e4d2d22f612eb3cbde")
+        companionId: new Types.ObjectId("6a29fe5b83e6804b9937e67b")
 
       },
       {
