@@ -2,7 +2,7 @@
 
 A secure and scalable healthcare appointment management system built with **NestJS**, **MongoDB**, **JWT Authentication**, **Google OAuth**, and **Role-Based Access Control (RBAC)**.
 
-The system allows doctors to manage their schedules, patients to book appointments, and companions to assist patients while maintaining a secure and efficient healthcare workflow.
+The platform enables doctors to manage their schedules, patients to book appointments, and companions to assist patients while maintaining a secure and efficient healthcare workflow.
 
 ![NestJS](https://img.shields.io/badge/NestJS-E0234E?logo=nestjs\&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js\&logoColor=white)
@@ -16,6 +16,23 @@ The system allows doctors to manage their schedules, patients to book appointmen
 
 * 💻 GitHub Repository: https://github.com/lujainIbrahem/shefaa_app
 * 📮 Postman Documentation: https://documenter.getpostman.com/view/44975525/2sBXiri8MS
+* 🚀 Live API: https://shefaa-app.onrender.com
+
+---
+
+## 📖 Overview
+
+Shefaa is a healthcare appointment management system that connects doctors, patients, and companions through a secure RESTful API.
+
+The system provides:
+
+* Secure Authentication & Authorization
+* Google OAuth Authentication
+* OTP Verification System
+* Appointment Scheduling
+* Doctor Availability Management
+* Session Management
+* Multi-Role Access Control
 
 ---
 
@@ -23,15 +40,32 @@ The system allows doctors to manage their schedules, patients to book appointmen
 
 ### 🔐 Authentication & Security
 
+* Register with Email & Password
+* Login with Email & Password
+* Google OAuth Authentication
+* Email Verification via OTP
+* Resend OTP
+* Forgot Password
+* Reset Password
+* Update Password
 * JWT Authentication
-* Access Token & Refresh Token
-* Google OAuth Login
-* OTP Verification
-* Forgot Password & Reset Password
-* Role-Based Authorization (Doctor / Patient / Companion)
-* Password Hashing using bcrypt
+* Access Token & Refresh Token Strategy
 * Session Validation
 * Token Revocation System
+* Logout From Current Device
+* Logout From All Devices
+* Password Hashing using bcrypt
+
+---
+
+### 🌐 Google Authentication
+
+* Google Sign-In using Google ID Token
+* Automatic Account Creation
+* JWT Token Generation
+* Role Assignment During Registration
+* Prevent Login Method Conflicts
+* Profile Completion Workflow
 
 ---
 
@@ -43,19 +77,23 @@ The system allows doctors to manage their schedules, patients to book appointmen
 * Create Available Time Slots
 * Manage Schedule
 * View Appointments
+* View Assigned Patients
 * Set Consultation Price
 
 #### 🧑 Patient
 
 * Complete Patient Profile
 * Book Appointments
+* Cancel Appointments
 * View Appointment History
 * Manage Medical Information
 
 #### 👨‍👩‍👧 Companion
 
 * Complete Companion Profile
-* Assist Patients
+* Book Appointments For Linked Patient
+* Cancel Appointments
+* View Patient Information
 * Manage Related Information
 
 ---
@@ -64,20 +102,51 @@ The system allows doctors to manage their schedules, patients to book appointmen
 
 * Create Available Time Slots
 * Appointment Booking
-* Prevent Duplicate Appointments
-* Validate Doctor Availability
+* Appointment Cancellation
+* Booking Validation
+* Duplicate Appointment Prevention
+* Doctor Availability Validation
 * Booking Status Management
 * Time Validation
+* Past Appointment Protection
+
+---
+
+### 👤 Profile Management
+
+* View Personal Profile
+* Update Profile
+* Complete Profile Information
+* Get Doctor Profile By ID
+* Get Patients Assigned To Doctor
+* Get Patients Assigned To Companion
 
 ---
 
 ### 📧 Email Services
 
-* Email Confirmation
+* Email Verification
 * Forgot Password OTP
-* HTML Email Templates
-* Event-Driven Email Handling
+* Event-Driven Email Notifications
+* Responsive HTML Email Templates
 * Brevo Integration
+
+---
+
+## ☁️ Deployment
+
+The application is deployed on Render.
+
+### Deployment Features
+
+* Automatic Deployment from GitHub
+* Environment Variables Management
+* Cloud Hosting
+* Continuous Deployment
+
+### Platform
+
+* Render
 
 ---
 
@@ -102,13 +171,18 @@ The system allows doctors to manage their schedules, patients to book appointmen
 ### Security
 
 * bcrypt
-* Crypto UUID
+* crypto
+* UUID
 * Environment Variables
 
-### Email Service
+### Email Services
 
 * Brevo
 * EventEmitter
+
+### Deployment
+
+* Render
 
 ---
 
@@ -116,9 +190,9 @@ The system allows doctors to manage their schedules, patients to book appointmen
 
 ### User
 
-Main collection that stores all users.
+Stores all system users.
 
-**Common Fields**
+#### Common Fields
 
 * First Name
 * Last Name
@@ -131,23 +205,25 @@ Main collection that stores all users.
 * Provider
 * Profile Status
 
-**Doctor Fields**
+#### Doctor Fields
 
 * Specialization
 * Consultation Price
 
-**Patient Fields**
+#### Patient Fields
 
 * Blood Type
 * Disease
 * Age
 * Current Medication
 * Assigned Doctor
+* Assigned Companion
 
-**Companion Fields**
+#### Companion Fields
 
 * Patient Relationship
 * Experience Level
+* Assigned Patient
 
 ---
 
@@ -162,7 +238,7 @@ Features:
 
 * OTP Hashing
 * Expiration Validation
-* Automatic Deletion Using TTL Index
+* TTL Index Auto Deletion
 
 ---
 
@@ -170,8 +246,11 @@ Features:
 
 Used for:
 
-* Secure Logout
+* Logout
 * Session Revocation
+
+Features:
+
 * Automatic Expiration Using TTL Index
 
 ---
@@ -200,11 +279,21 @@ Features:
 
 ---
 
+## ⚡ Advanced MongoDB Features
+
+* TTL Index for OTP Expiration
+* TTL Index for Revoked Tokens
+* Compound Indexes
+* Unique Constraints
+* Mongoose Virtual Population
+
+---
+
 ## 🔐 Security Implementation
 
 ### Password Security
 
-Passwords are hashed using bcrypt before being stored in the database.
+Passwords are hashed using bcrypt before storage.
 
 ```ts
 await bcrypt.hash(password, saltRounds)
@@ -217,43 +306,26 @@ The system generates:
 * Access Token
 * Refresh Token
 
-Each protected endpoint validates the user's token before granting access.
+Every protected endpoint validates the token before granting access.
 
 ### Google Authentication
 
-Users can authenticate using Google OAuth.
-
-The backend verifies the received Google ID Token before creating or authenticating the account.
+Google ID Tokens are verified before authenticating or creating user accounts.
 
 ### OTP Verification
 
 OTP codes are:
 
-* Generated securely
-* Hashed before storage
-* Automatically deleted after expiration
+* Generated Securely
+* Hashed Before Storage
+* Automatically Deleted After Expiration
 
----
+### Session Security
 
-## ⚡ Database Optimization
-
-### MongoDB Indexes
-
-#### OTP TTL Index
-
-Automatically removes expired OTP records.
-
-#### Revoked Token TTL Index
-
-Automatically removes expired revoked sessions.
-
-#### Available Time Unique Index
-
-Prevents duplicate doctor slots.
-
-#### Appointment Compound Index
-
-Prevents duplicate confirmed appointments.
+* Refresh Token Strategy
+* Session Validation
+* Token Revocation
+* Logout Protection
 
 ---
 
@@ -261,37 +333,50 @@ Prevents duplicate confirmed appointments.
 
 ```text
 User Login
-     ↓
+      ↓
 Email/Password OR Google OAuth
-     ↓
+      ↓
 Validate Credentials
-     ↓
+      ↓
 Generate Access Token
-     ↓
+      ↓
 Generate Refresh Token
-     ↓
+      ↓
 Verify User Role
-     ↓
+      ↓
 Access Protected APIs
 ```
 
 ---
 
-## 🏗 Project Structure
+## 📅 Appointment Workflow
 
 ```text
-src
-├── common
-├── module
-│   ├── auth
-│   ├── user
-│   ├── profile
-│   ├── appointment
-│   └── availableTime
-├── seedData
-├── config
-└── app.module.ts
+Doctor Creates Available Slots
+             ↓
+Patient Selects Slot
+             ↓
+Validate Availability
+             ↓
+Create Appointment
+             ↓
+Update Slot Status
+             ↓
+Appointment Confirmed
 ```
+
+---
+
+## 🏗 Architecture Highlights
+
+* RESTful API Design
+* Modular Architecture
+* Role-Based Access Control (RBAC)
+* Event-Driven Architecture
+* Secure Authentication Flow
+* Session Management
+* Clean Separation of Concerns
+* Scalable Project Structure
 
 ---
 
@@ -309,7 +394,7 @@ npm run start:dev
 
 ---
 
-## ⚙ Environment Variables
+## ⚙️ Environment Variables
 
 ```env
 PORT=
@@ -337,50 +422,23 @@ FRONT_ORIGIN=
 
 ---
 
-## 📌 Main Modules
-
-### Auth Module
-
-* Register
-* Login
-* Google Login
-* Refresh Token
-* Verify Email
-* Forgot Password
-* Reset Password
-
-### Profile Module
-
-* Complete Profile
-* Update Profile
-* View Profile
-
-### Available Time Module
-
-* Create Slots
-* Manage Doctor Availability
-
-### Appointment Module
-
-* Book Appointment
-* Validate Booking
-* Manage Appointments
-
----
-
 ## 🎯 Key Concepts Implemented
 
 * RESTful API Design
 * Authentication & Authorization
 * JWT Security
 * Google OAuth Integration
-* MongoDB Relationships
 * OTP Verification
 * Session Management
 * Token Revocation
-* Event-Driven Architecture
-* RBAC (Role-Based Access Control)
-* Clean & Scalable Architecture
+* Multi-Role System
+* RBAC
+* MongoDB Relationships
+* MongoDB TTL Indexes
+* Event-Driven Email Notifications
+* Profile Completion Workflow
+* Clean Architecture
+* Scalable Backend Design
 
 ---
 
